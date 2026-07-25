@@ -30,26 +30,6 @@ Instead of predicting the future like a horoscope, **Tomorrow Me** is a high-pre
 
 ## 🔄 Detailed Platform Workflow
 
-```mermaid
-flowchart TD
-    A[Landing Page: "Meet Tomorrow You"] --> B[Local JWT Auth & Security]
-    B --> C[Dashboard Command Center]
-    
-    C --> D[Tool 1: Future Simulator]
-    C --> E[Tool 2: Reality Check]
-    C --> F[Tool 3: Mind Mirror]
-    
-    D --> D1[Future Agent: Simulate 5-Yr Timelines A, B, C]
-    E --> E1[Reality Agent: Evaluate Credibility & Bias]
-    F --> F1[Psychology Agent: Compute Focus & Burnout Risk]
-    
-    D1 --> G[Judge Agent: Synthesize Verdict]
-    E1 --> G
-    F1 --> G
-    
-    G --> H[Unified Decision Report & PDF Export]
-```
-
 ### 1. Landing & Onboarding
 - **The Experience**: Alex lands on a dark, glassmorphic interface inspired by Linear, Apple, and Vercel. Floating canvas particles drift in the background while glowing gradients highlight the core mission: *"Every decision creates a different future."*
 - **Auth**: Alex registers an account. Password security is handled via direct `bcrypt` hashing and authentication issues stateless `JWT` bearer tokens.
