@@ -14,7 +14,22 @@ import type {
   TokenResponse,
 } from "@/types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+function getApiBaseUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (envUrl && envUrl.trim().length > 0) {
+    let clean = envUrl.trim();
+    if (clean.endsWith("/")) clean = clean.slice(0, -1);
+    if (!clean.endsWith("/api")) clean = `${clean}/api`;
+    return clean;
+  }
+  // In browser, if no env variable is set, default to relative /api (proxied by Next.js rewrites) or localhost
+  if (typeof window !== "undefined") {
+    if (window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+      return "/api";
+    }
+  }
+  return "http://localhost:8000/api";
+}
 
 class ApiError extends Error {
   status: number;
@@ -41,7 +56,11 @@ async function request<T>(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE}${endpoint}`, {
+  const apiBase = getApiBaseUrl();
+  const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+  const url = `${apiBase}${cleanEndpoint}`;
+
+  const response = await fetch(url, {
     ...options,
     headers,
   });

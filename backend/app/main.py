@@ -42,13 +42,18 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS (Temporary for testing)
+# CORS Middleware Configuration (Production-safe & Vercel deployment compatible)
+origins = settings.cors_origins_list
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,  # Must be False when using "*"
+    allow_origins=origins if origins != ["*"] else [],
+    allow_origin_regex=r"https://.*\.vercel\.app|https://.*\.onrender\.com|http://localhost:\d+|http://127\.0\.0\.1:\d+|.*" if origins == ["*"] else None,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=3600,
 )
 
 # Register routers

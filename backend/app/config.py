@@ -26,16 +26,18 @@ class Settings(BaseSettings):
     AI_MODEL: str = "llama-3.3-70b-versatile"
 
     # CORS
-    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
+    CORS_ORIGINS: str = "*"
 
     # Rate Limiting
-    RATE_LIMIT_REQUESTS: int = 30
+    RATE_LIMIT_REQUESTS: int = 60
     RATE_LIMIT_WINDOW: int = 60  # seconds
 
     @property
     def cors_origins_list(self) -> list[str]:
         """Parse CORS origins from comma-separated string."""
-        return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
+        if not self.CORS_ORIGINS or self.CORS_ORIGINS == "*":
+            return ["*"]
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
 
     @property
     def ai_available(self) -> bool:
