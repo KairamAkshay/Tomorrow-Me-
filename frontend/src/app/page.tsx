@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-
+import { DemoModal } from "@/components/shared/demo-modal";
 import { Button } from "@/components/ui/button";
 import { FloatingParticles } from "@/components/shared/floating-particles";
 import { GlassCard } from "@/components/shared/glass-card";
@@ -29,22 +29,29 @@ import {
 } from "@/components/shared/page-transition";
 
 export default function LandingPage() {
+  const [isDemoOpen, setIsDemoOpen] = useState(false);
+
   return (
     <main className="relative min-h-screen">
       <FloatingParticles count={40} />
 
-      <HeroSection />
+      <HeroSection onWatchDemo={() => setIsDemoOpen(true)} />
       <FeaturesSection />
       <HowItWorksSection />
       <TestimonialsSection />
       <FAQSection />
       <FooterSection />
+
+      <DemoModal
+        isOpen={isDemoOpen}
+        onClose={() => setIsDemoOpen(false)}
+      />
     </main>
   );
 }
 
 /* ===== Hero ===== */
-function HeroSection() {
+function HeroSection({ onWatchDemo }: { onWatchDemo: () => void }) {
   return (
     <section className="relative flex flex-col items-center justify-center min-h-screen px-6 text-center">
       <StaggerContainer className="flex flex-col items-center gap-6 max-w-4xl">
@@ -84,7 +91,8 @@ function HeroSection() {
             <Button
               size="lg"
               variant="outline"
-              className="px-8 py-6 text-base font-medium rounded-xl border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--surface-2)]"
+              onClick={onWatchDemo}
+              className="px-8 py-6 text-base font-medium rounded-xl border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--surface-2)] cursor-pointer"
             >
               <Play className="mr-2 w-5 h-5" />
               Watch Demo
