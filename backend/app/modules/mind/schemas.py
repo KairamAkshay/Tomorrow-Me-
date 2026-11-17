@@ -20,7 +20,7 @@ class MindAssessmentRequest(BaseModel):
 class MindAssessmentResponse(BaseModel):
     """Mind mirror assessment response."""
 
-    id: int
+    id: str
     sleep: float
     screen_time: float
     study_hours: float
@@ -32,6 +32,4 @@ class MindAssessmentResponse(BaseModel):
     burnout_risk: int
     decision_readiness: int
     attention_health: int
-    created_at: datetime
-
-    model_config = {"from_attributes": True}
+    created_at: str

@@ -1,45 +1,78 @@
-"""Auth API endpoints."""
+"""Auth API endpoints — MongoDB version."""
 
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user
-from app.database import get_db
-from app.modules.auth.models import User
 from app.modules.auth.schemas import (
+    ForgotPasswordRequest,
+    MessageResponse,
+    ResetPasswordRequest,
     TokenResponse,
+    UpdateProfileRequest,
     UserLogin,
     UserRegister,
     UserResponse,
 )
-from app.modules.auth.service import AuthService
+from app.modules.auth.service import AuthService, _user_response
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
 @router.post("/register", response_model=TokenResponse, status_code=201)
-def register(data: UserRegister, db: Session = Depends(get_db)):
+async def register(data: UserRegister):
     """Register a new user account."""
-    service = AuthService(db)
-    user, token = service.register(data)
+    service = AuthService()
+    user, token = await service.register(data)
     return TokenResponse(
         access_token=token,
-        user=UserResponse.model_validate(user),
+        user=_user_response(user),
     )
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(data: UserLogin, db: Session = Depends(get_db)):
-    """Login with username and password."""
-    service = AuthService(db)
-    user, token = service.login(data)
+async def login(data: UserLogin):
+    """Login with email and password."""
+    service = AuthService()
+    user, token = await service.login(data)
     return TokenResponse(
         access_token=token,
-        user=UserResponse.model_validate(user),
+        user=_user_response(user),
     )
 
 
+@router.post("/logout", response_model=MessageResponse)
+async def logout(current_user: dict = Depends(get_current_user)):
+    """Logout the current user (client-side token invalidation)."""
+    return MessageResponse(message="Logged out successfully")
+
+
 @router.get("/me", response_model=UserResponse)
-def get_me(current_user: User = Depends(get_current_user)):
+async def get_me(current_user: dict = Depends(get_current_user)):
     """Get the current authenticated user."""
-    return UserResponse.model_validate(current_user)
+    service = AuthService()
+    return await service.get_profile(current_user)
+
+
+@router.post("/forgot-password")
+async def forgot_password(data: ForgotPasswordRequest):
+    """Request a password reset token."""
+    service = AuthService()
+    return await service.forgot_password(data)
+
+
+@router.post("/reset-password", response_model=MessageResponse)
+async def reset_password(data: ResetPasswordRequest):
+    """Reset password using a valid reset token."""
+    service = AuthService()
+    result = await service.reset_password(data)
+    return MessageResponse(message=result["message"])
+
+
+@router.put("/profile", response_model=UserResponse)
+async def update_profile(
+    data: UpdateProfileRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Update user profile information."""
+    service = AuthService()
+    return await service.update_profile(current_user, data)

@@ -1,4 +1,4 @@
-/** Dashboard layout with responsive sidebar navigation. */
+/** Dashboard layout with responsive sidebar navigation and session restoration. */
 
 "use client";
 
@@ -54,8 +54,9 @@ export default function DashboardLayout({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex flex-col items-center justify-center min-h-screen gap-3">
         <div className="w-8 h-8 border-2 border-[var(--surface-3)] border-t-[var(--accent-1)] rounded-full animate-spin" />
+        <p className="text-xs text-[var(--text-tertiary)] font-mono">Restoring session...</p>
       </div>
     );
   }
@@ -192,11 +193,11 @@ function SidebarContent({
       <div className="border-t border-[var(--border-subtle)] pt-4 mt-4">
         <div className="flex items-center gap-3 px-3 py-2 mb-2">
           <div className="w-8 h-8 rounded-full bg-[var(--accent-1)]/20 flex items-center justify-center text-sm font-medium text-[var(--accent-1)]">
-            {user?.full_name?.[0] || user?.username?.[0] || "U"}
+            {user?.full_name?.[0] || user?.email?.[0]?.toUpperCase() || "U"}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">
-              {user?.full_name || user?.username}
+              {user?.full_name || user?.email?.split("@")[0]}
             </p>
             <p className="text-xs text-[var(--text-tertiary)] truncate">
               {user?.email}

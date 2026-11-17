@@ -2,19 +2,17 @@
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy.orm import Session
+from bson import ObjectId
 
 from app.core.security import decode_access_token
-from app.database import get_db
-from app.modules.auth.models import User
+from app.database import get_database
 
 security_scheme = HTTPBearer()
 
 
-def get_current_user(
+async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security_scheme),
-    db: Session = Depends(get_db),
-) -> User:
+) -> dict:
     """Extract and validate the current user from the JWT token."""
     token = credentials.credentials
     payload = decode_access_token(token)
@@ -33,7 +31,15 @@ def get_current_user(
             detail="Invalid token payload",
         )
 
-    user = db.query(User).filter(User.id == int(user_id)).first()
+    db = get_database()
+    try:
+        user = await db.users.find_one({"_id": ObjectId(user_id)})
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+        )
+
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

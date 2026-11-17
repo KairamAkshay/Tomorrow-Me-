@@ -19,10 +19,10 @@ export default function RegisterPage() {
   const router = useRouter();
   const setAuth = useAuthStore((s) => s.setAuth);
 
-  const [username, setUsername] = useState("");
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -30,14 +30,30 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters");
+      return;
+    }
+
+    if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/\d/.test(password)) {
+      setError("Password must contain at least one uppercase letter, one lowercase letter, and one number");
+      return;
+    }
+
     setLoading(true);
 
     try {
       const res = await auth.register({
-        username,
-        email,
+        full_name: fullName.trim(),
+        email: email.trim().toLowerCase(),
         password,
-        full_name: fullName || undefined,
+        confirm_password: confirmPassword,
       });
       setAuth(res.user, res.access_token);
       router.push("/dashboard");
@@ -71,35 +87,22 @@ export default function RegisterPage() {
             Start making better decisions today
           </p>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="fullName">Full Name</Label>
               <Input
                 id="fullName"
                 type="text"
-                placeholder="Your full name"
+                placeholder="Jane Doe"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="bg-[var(--surface-2)] border-[var(--border-default)] focus:border-[var(--accent-1)] rounded-xl h-11"
-              />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                type="text"
-                placeholder="Choose a username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
                 required
-                minLength={3}
                 className="bg-[var(--surface-2)] border-[var(--border-default)] focus:border-[var(--accent-1)] rounded-xl h-11"
               />
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Email Address</Label>
               <Input
                 id="email"
                 type="email"
@@ -117,11 +120,10 @@ export default function RegisterPage() {
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Min 6 characters"
+                  placeholder="Min 8 chars, 1 upper, 1 lower, 1 digit"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  minLength={6}
                   className="bg-[var(--surface-2)] border-[var(--border-default)] focus:border-[var(--accent-1)] rounded-xl h-11 pr-10"
                 />
                 <button
@@ -138,6 +140,19 @@ export default function RegisterPage() {
               </div>
             </div>
 
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type={showPassword ? "text" : "password"}
+                placeholder="Repeat your password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                className="bg-[var(--surface-2)] border-[var(--border-default)] focus:border-[var(--accent-1)] rounded-xl h-11"
+              />
+            </div>
+
             {error && (
               <p className="text-sm text-[var(--danger)] text-center">{error}</p>
             )}
@@ -145,7 +160,7 @@ export default function RegisterPage() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-11 rounded-xl bg-[var(--accent-1)] hover:bg-[var(--accent-2)] text-white font-medium"
+              className="w-full h-11 rounded-xl bg-[var(--accent-1)] hover:bg-[var(--accent-2)] text-white font-medium mt-2"
             >
               {loading ? (
                 <span className="flex items-center gap-2">

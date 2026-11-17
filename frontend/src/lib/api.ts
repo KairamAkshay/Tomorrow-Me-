@@ -1,17 +1,22 @@
 /** API client for communicating with the FastAPI backend. */
 
 import type {
+  ForgotPasswordRequest,
   HealthResponse,
   LoginRequest,
+  MessageResponse,
   MindAssessment,
   MindAssessmentRequest,
   RealityCheck,
   RealityCheckRequest,
   RegisterRequest,
   ReportsListResponse,
+  ResetPasswordRequest,
   Simulation,
   SimulationRequest,
   TokenResponse,
+  UpdateProfileRequest,
+  User,
 } from "@/types";
 
 function getApiBaseUrl(): string {
@@ -69,7 +74,11 @@ async function request<T>(
     let message = "An error occurred";
     try {
       const errorData = await response.json();
-      message = errorData.detail || message;
+      if (Array.isArray(errorData.detail)) {
+        message = errorData.detail.map((d: any) => d.msg || JSON.stringify(d)).join(", ");
+      } else {
+        message = errorData.detail || message;
+      }
     } catch {
       message = response.statusText;
     }
@@ -106,7 +115,30 @@ export const auth = {
       body: JSON.stringify(data),
     }),
 
-  me: () => request<TokenResponse["user"]>("/auth/me"),
+  logout: () =>
+    request<MessageResponse>("/auth/logout", {
+      method: "POST",
+    }),
+
+  me: () => request<User>("/auth/me"),
+
+  forgotPassword: (data: ForgotPasswordRequest) =>
+    request<{ message: string; reset_token?: string; reset_url?: string }>("/auth/forgot-password", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  resetPassword: (data: ResetPasswordRequest) =>
+    request<MessageResponse>("/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  updateProfile: (data: UpdateProfileRequest) =>
+    request<User>("/auth/profile", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
 };
 
 /* ===== Simulator ===== */
@@ -119,9 +151,9 @@ export const simulator = {
 
   list: () => request<Simulation[]>("/simulator/"),
 
-  get: (id: number) => request<Simulation>(`/simulator/${id}`),
+  get: (id: string) => request<Simulation>(`/simulator/${id}`),
 
-  delete: (id: number) =>
+  delete: (id: string) =>
     request<void>(`/simulator/${id}`, { method: "DELETE" }),
 };
 
@@ -135,9 +167,9 @@ export const reality = {
 
   list: () => request<RealityCheck[]>("/reality/"),
 
-  get: (id: number) => request<RealityCheck>(`/reality/${id}`),
+  get: (id: string) => request<RealityCheck>(`/reality/${id}`),
 
-  delete: (id: number) =>
+  delete: (id: string) =>
     request<void>(`/reality/${id}`, { method: "DELETE" }),
 };
 
@@ -151,9 +183,9 @@ export const mind = {
 
   list: () => request<MindAssessment[]>("/mind/"),
 
-  get: (id: number) => request<MindAssessment>(`/mind/${id}`),
+  get: (id: string) => request<MindAssessment>(`/mind/${id}`),
 
-  delete: (id: number) =>
+  delete: (id: string) =>
     request<void>(`/mind/${id}`, { method: "DELETE" }),
 };
 

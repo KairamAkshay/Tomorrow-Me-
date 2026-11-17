@@ -1,4 +1,4 @@
-"""Base agent class for AI interactions."""
+"""Base agent class for AI interactions with OpenAI/Gemini compatibility."""
 
 import json
 import logging
@@ -20,7 +20,7 @@ class BaseAgent(ABC):
         self.client: Optional[OpenAI] = None
         if settings.ai_available:
             self.client = OpenAI(
-                api_key=settings.AI_API_KEY,
+                api_key=settings.effective_ai_key,
                 base_url=settings.AI_BASE_URL,
             )
 
@@ -37,8 +37,8 @@ class BaseAgent(ABC):
     def analyze(self, **kwargs) -> dict[str, Any]:
         """Run the agent analysis. Uses AI if available, fallback otherwise."""
         if not self.client:
-            logger.warning(
-                f"{self.__class__.__name__}: AI unavailable, using fallback"
+            logger.info(
+                f"{self.__class__.__name__}: AI key not configured or unavailable, using fallback generator"
             )
             return self.get_fallback_response(**kwargs)
 
@@ -50,7 +50,7 @@ class BaseAgent(ABC):
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are a helpful AI analyst. Always respond with valid JSON only. No markdown, no code blocks, just raw JSON.",
+                        "content": "You are a helpful AI decision intelligence analyst. Always respond with valid JSON only. No markdown, no code blocks, just raw JSON.",
                     },
                     {"role": "user", "content": prompt},
                 ],

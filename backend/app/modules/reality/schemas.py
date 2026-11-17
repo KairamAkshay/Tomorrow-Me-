@@ -28,11 +28,9 @@ class RealityCheckRequest(BaseModel):
 class RealityCheckResponse(BaseModel):
     """Reality check analysis response."""
 
-    id: int
+    id: str
     content: str
     content_type: str
     analysis: dict[str, Any]
     overall_score: int
-    created_at: datetime
-
-    model_config = {"from_attributes": True}
+    created_at: str

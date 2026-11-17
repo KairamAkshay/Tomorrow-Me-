@@ -1,24 +1,36 @@
-"""Reality Check business logic service."""
+"""Reality Check business logic service — MongoDB version."""
 
 import logging
-
-from sqlalchemy.orm import Session
+from bson import ObjectId
 
 from app.ai.reality_agent import reality_agent
 from app.core.exceptions import NotFoundError
-from app.modules.reality.models import RealityCheck
-from app.modules.reality.schemas import RealityCheckRequest
+from app.core.serializers import now_utc
+from app.database import get_database
+from app.modules.reality.schemas import RealityCheckRequest, RealityCheckResponse
 
 logger = logging.getLogger(__name__)
+
+
+def _check_response(doc: dict) -> RealityCheckResponse:
+    """Build RealityCheckResponse from MongoDB document."""
+    return RealityCheckResponse(
+        id=str(doc["_id"]),
+        content=doc["content"],
+        content_type=doc["content_type"],
+        analysis=doc["analysis"],
+        overall_score=doc["overall_score"],
+        created_at=doc["created_at"].isoformat(),
+    )
 
 
 class RealityService:
     """Handles reality check analysis."""
 
-    def __init__(self, db: Session):
-        self.db = db
+    def __init__(self):
+        self.db = get_database()
 
-    def analyze(self, user_id: int, data: RealityCheckRequest) -> RealityCheck:
+    async def analyze(self, user_id: str, data: RealityCheckRequest) -> RealityCheckResponse:
         """Run a reality check on the provided content."""
         logger.info(f"Running reality check for user {user_id}: {data.content_type}")
 
@@ -28,42 +40,54 @@ class RealityService:
         )
 
         overall_score = analysis.get("overall_score", 50)
+        now = now_utc()
 
-        check = RealityCheck(
-            user_id=user_id,
-            content=data.content,
-            content_type=data.content_type.value,
-            analysis=analysis,
-            overall_score=overall_score,
-        )
-        self.db.add(check)
-        self.db.commit()
-        self.db.refresh(check)
+        doc = {
+            "user_id": ObjectId(user_id),
+            "content": data.content,
+            "content_type": data.content_type.value,
+            "analysis": analysis,
+            "overall_score": overall_score,
+            "created_at": now,
+            "updated_at": now,
+        }
 
-        return check
+        result = await self.db.decision_reports.insert_one(doc)
+        doc["_id"] = result.inserted_id
 
-    def get_check(self, user_id: int, check_id: int) -> RealityCheck:
+        return _check_response(doc)
+
+    async def get_check(self, user_id: str, check_id: str) -> RealityCheckResponse:
         """Get a specific reality check."""
-        check = (
-            self.db.query(RealityCheck)
-            .filter(RealityCheck.id == check_id, RealityCheck.user_id == user_id)
-            .first()
-        )
-        if not check:
+        try:
+            doc = await self.db.decision_reports.find_one({
+                "_id": ObjectId(check_id),
+                "user_id": ObjectId(user_id),
+            })
+        except Exception:
             raise NotFoundError("Reality check not found")
-        return check
 
-    def list_checks(self, user_id: int) -> list[RealityCheck]:
+        if not doc:
+            raise NotFoundError("Reality check not found")
+        return _check_response(doc)
+
+    async def list_checks(self, user_id: str) -> list[RealityCheckResponse]:
         """List all reality checks for a user."""
-        return (
-            self.db.query(RealityCheck)
-            .filter(RealityCheck.user_id == user_id)
-            .order_by(RealityCheck.created_at.desc())
-            .all()
-        )
+        cursor = self.db.decision_reports.find(
+            {"user_id": ObjectId(user_id)}
+        ).sort("created_at", -1)
+        docs = await cursor.to_list(length=100)
+        return [_check_response(doc) for doc in docs]
 
-    def delete_check(self, user_id: int, check_id: int) -> None:
+    async def delete_check(self, user_id: str, check_id: str) -> None:
         """Delete a reality check."""
-        check = self.get_check(user_id, check_id)
-        self.db.delete(check)
-        self.db.commit()
+        try:
+            result = await self.db.decision_reports.delete_one({
+                "_id": ObjectId(check_id),
+                "user_id": ObjectId(user_id),
+            })
+        except Exception:
+            raise NotFoundError("Reality check not found")
+
+        if result.deleted_count == 0:
+            raise NotFoundError("Reality check not found")

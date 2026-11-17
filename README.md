@@ -1,144 +1,160 @@
 # Tomorrow Me — AI Decision Intelligence Platform
 
-> **"See Tomorrow. Decide Today."**
-
-An AI-powered Decision Intelligence Platform built for Gen Z, college students, fresh graduates, and early-career professionals standing at life’s biggest crossroads.
-
----
-
-## 📖 The Story: The Decision Crisis
-
-Meet **Alex**, a final-year Computer Science student in 2025.
-
-Alex is 22, exhausted from midterms, and staring at three radically different paths:
-1. **Option A**: Take a high-risk, un-paid internship at an AI startup in Bangalore.
-2. **Option B**: Accept a safe, structured corporate job offer from a legacy tech firm.
-3. **Option C**: Prepare for GRE/GATE and pursue higher studies abroad.
-
-Every night, Alex scrolls LinkedIn and X (Twitter). Every post claims to have the answer:
-> *"Quit your 9-to-5! If you don't build your startup by 23, you failed!"*
-> *"Higher studies are a waste of money — just grind LeetCode!"*
-> *"Join a Fortune 500 company for work-life balance!"*
-
-The advice is conflicting, noisy, and dripping with survivorship bias. Worse, Alex is making this decision on 5 hours of sleep, 8 hours of screen time, and peak burnout.
-
-### Enter **Tomorrow Me**.
-
-Instead of predicting the future like a horoscope, **Tomorrow Me** is a high-precision simulation engine. It allows Alex to test-drive possible futures before making a single real-world commitment. It checks the credibility of noisy advice, evaluates Alex's mental readiness, and synthesizes 5-year multidimensional projections using a multi-agent AI system.
+> **See Tomorrow. Decide Today.**  
+> An AI-powered decision intelligence platform that simulates possible futures, reality-checks advice, and evaluates mental readiness before making life-altering choices.
 
 ---
 
-## 🔄 Detailed Platform Workflow
+## 🌟 Key Features
 
-### 1. Landing & Onboarding
-- **The Experience**: Alex lands on a dark, glassmorphic interface inspired by Linear, Apple, and Vercel. Floating canvas particles drift in the background while glowing gradients highlight the core mission: *"Every decision creates a different future."*
-- **Auth**: Alex registers an account. Password security is handled via direct `bcrypt` hashing and authentication issues stateless `JWT` bearer tokens.
-
-### 2. Feature One: Future Simulator (`/simulator`)
-- **Input**: Alex inputs current situation, core life goal, and up to 5 potential choices.
-- **AI Processing**: The `FutureAgent` fires parallel simulations for each choice across a 5-year timeline.
-- **The Output**:
-  - **Year 1, 2, 3, & 5 Trajectories**: Specific narrative evolution per choice.
-  - **8 Dimensional Metrics**: Career Growth, Income Potential, Skill Development, Network Growth, Mental Wellbeing, Risk Level, Opportunities, Confidence.
-  - **Visual Analytics**: Interactive Recharts Radar Chart and multi-bar comparison graph.
-  - **Milestone Roadmap & Risk Audit**: Key warnings (e.g. initial cash crunch) and critical achievements.
-
-### 3. Feature Two: Reality Check (`/reality-check`)
-- **Input**: Alex pastes that viral LinkedIn post claiming *"Quit your job and do dropshipping"*.
-- **AI Processing**: The `RealityAgent` dissects the text line by line.
-- **The Output**:
-  - **Reality Score (0–100)**: Animated circular gauge rating overall trustworthiness.
-  - **Bias & Evidence Audit**: Identifies survivorship bias, hidden resource assumptions, and emotional language.
-  - **Red Flags vs. Strengths**: Highlighted lists exposing what the post left out.
-
-### 4. Feature Three: Mind Mirror (`/mind-mirror`)
-- **Input**: Alex adjusts interactive sliders for daily sleep (hours), screen time, study/work load, exercise, stress level (1-10), and mood (1-10).
-- **AI Processing**: The `PsychologyAgent` evaluates cognitive load and decision readiness using evidence-based wellness models.
-- **The Output**:
-  - **4 Score Gauges**: Focus Score, Burnout Risk, Decision Readiness, and Attention Health.
-  - **Prioritized Recommendations**: Color-coded action steps (e.g., *"Delay big decisions until sleep debt is recovered"*).
-
-### 5. The Judge Agent & Unified Reports (`/reports`)
-- **Synthesis**: The `JudgeAgent` combines the outputs of all agents to give Alex a clear, decisive verdict, confidence level, and step-by-step action plan.
-- **Reports Hub**: Alex can review, filter, and track all past simulations and reality checks over time in a unified history view.
+1. **Future Simulator**: Multi-agent Monte Carlo-style plausible timeline generation across 1, 2, 3, and 5-year horizons with score breakdowns, key opportunities, critical milestones, and major risk identification.
+2. **Reality Check**: Critical analysis of advice, social media posts, or claims evaluating credibility, empirical backing, cognitive bias, and hidden assumptions.
+3. **Mind Mirror**: Holistic lifestyle and wellness assessment evaluating focus levels, burnout risk, attention health, and cognitive decision readiness.
+4. **Judge Agent**: Synthesizes and cross-references results across all analytical vectors into actionable recommendations with clear reasoning and prioritized next steps.
+5. **MongoDB Atlas Integration**: Isolated persistent storage for users, decision simulations, reality reports, mind mirror profiles, and expiring password reset tokens.
 
 ---
 
-## 🤖 AI Multi-Agent Architecture
+## 🛠️ Architecture
 
-The platform relies on a 4-Agent collaborative intelligence model:
-
-| Agent Name | Specialty | Role & Responsibility |
-|------------|-----------|------------------------|
-| **Future Agent** | Multiverse Projection | Simulates 5-year trajectories per decision branch with 8 quantitative scores |
-| **Reality Agent** | Fact & Bias Detection | Evaluates external claims for evidence quality, bias level, and practicality |
-| **Psychology Agent** | Cognitive Health | Analyzes lifestyle inputs to determine burnout risk and decision capacity |
-| **Judge Agent** | Decision Synthesis | Combines all outputs into a final verdict, confidence rating, and next steps |
+- **Backend**: FastAPI (Python 3.12), Motor / PyMongo (Async MongoDB Driver), JWT Authentication (Bcrypt + python-jose), Gemini 2.0 Flash / OpenAI API.
+- **Frontend**: Next.js 16 (App Router, Turbopack), React 19, Tailwind CSS v4, Lucide Icons, Framer Motion, Recharts.
+- **Database**: MongoDB Atlas (`tomorrow_me_ai`).
+- **Deployments**: Vercel (Frontend), Render (Backend).
 
 ---
 
-## 💻 Tech Stack
+## 🚀 Local Development Setup
 
-| Layer | Technologies |
-|-------|--------------|
-| **Frontend** | Next.js 15 (App Router), TypeScript, Tailwind CSS v4, Framer Motion, Recharts, Lucide Icons, Shadcn UI |
-| **Backend** | FastAPI, Python 3.12, Pydantic v2, Uvicorn, SQLAlchemy |
-| **Database** | SQLite |
-| **Authentication** | Direct `bcrypt` password hashing + JWT Bearer Tokens |
-| **AI System** | Multi-Agent LLM architecture (OpenAI / Groq compatible with automated fallback generators) |
+### 1. Prerequisites
+- **Node.js** >= 20.x
+- **Python** >= 3.12.x
+- **MongoDB** (Local instance or MongoDB Atlas cluster connection string)
 
 ---
 
-## ⚡ Quick Start & Installation
+### 2. Backend Setup
 
-### Prerequisites
-- Node.js 18+
-- Python 3.12+
-
-### 1. Backend Setup
 ```bash
 cd backend
-python -m venv venv
 
-# Windows
-.\venv\Scripts\activate
+# Create and activate virtual environment
+python -m venv venv
+# Windows:
+.\venv\Scripts\Activate.ps1
+# Mac/Linux:
+source venv/bin/activate
 
 # Install dependencies
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 
-# Run server
-uvicorn app.main:app --reload --port 8000
+# Configure environment variables
+cp .env.example .env
+# Edit .env and supply your MONGODB_URI and GEMINI_API_KEY / AI_API_KEY
 ```
-Backend will run at: `http://localhost:8000`  
-API Docs (Swagger): `http://localhost:8000/docs`
 
-### 2. Frontend Setup
+#### Run the Backend Server:
+```bash
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+- API Docs: `http://localhost:8000/docs`
+- Health check: `http://localhost:8000/api/health`
+
+#### Run Backend Integration Tests:
+```bash
+python -m pytest test_api.py -v
+```
+
+---
+
+### 3. Frontend Setup
+
 ```bash
 cd frontend
+
+# Install packages
 npm install
+
+# Configure environment variables
+cp .env.example .env.local
+# Default NEXT_PUBLIC_API_URL=http://localhost:8000/api
+
+# Run development server
 npm run dev
 ```
-Frontend will run at: `http://localhost:3000`
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 🧪 Testing
+## 🔐 Environment Variables
 
-To run the end-to-end integration test suite covering database operations, authentication, AI fallbacks, and all 6 core API routes:
+### Backend (`backend/.env`)
+| Variable | Description | Example |
+| :--- | :--- | :--- |
+| `MONGODB_URI` | MongoDB connection string | `mongodb+srv://user:pass@cluster.mongodb.net/?retryWrites=true&w=majority` |
+| `DATABASE_NAME` | Database name | `tomorrow_me_ai` |
+| `JWT_SECRET` | Secret key for JWT signing | `random-secure-secret-string` |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | JWT expiration | `60` |
+| `RESET_TOKEN_EXPIRE_MINUTES` | Password reset link expiration | `30` |
+| `FRONTEND_URL` | Frontend client origin | `http://localhost:3000` |
+| `CORS_ORIGINS` | Allowed CORS origins | `http://localhost:3000,http://127.0.0.1:3000` |
+| `GEMINI_API_KEY` | Google Gemini API key | `AIzaSy...` |
+| `AI_BASE_URL` | AI Gateway endpoint | `https://generativelanguage.googleapis.com/v1beta/openai/` |
+| `AI_MODEL` | Target AI model | `gemini-2.0-flash` |
 
-```bash
-cd backend
-.\venv\Scripts\python.exe test_api.py
-```
-
-To test the frontend production build and TypeScript check:
-```bash
-cd frontend
-npm run build
-```
+### Frontend (`frontend/.env.local`)
+| Variable | Description | Example |
+| :--- | :--- | :--- |
+| `NEXT_PUBLIC_API_URL` | Backend API URL | `http://localhost:8000/api` |
 
 ---
 
-## 📜 License
+## 🗄️ MongoDB Database Collections & Indexes
 
-MIT License. Built for the National AI Hackathon 2025.
+Database Name: `tomorrow_me_ai`
+
+1. **`users`**
+   - Indexes: `{ email: 1 }` (unique)
+   - Documents: `_id`, `email`, `full_name`, `hashed_password`, `created_at`, `updated_at`.
+
+2. **`simulations`**
+   - Indexes: `{ user_id: 1 }`, `{ created_at: 1 }`
+   - Documents: `_id`, `user_id`, `situation`, `goal`, `choices`, `timelines`, `recommendation`, `created_at`, `updated_at`.
+
+3. **`decision_reports`** (Reality Checks)
+   - Indexes: `{ user_id: 1 }`, `{ created_at: 1 }`
+   - Documents: `_id`, `user_id`, `content`, `content_type`, `analysis`, `overall_score`, `created_at`, `updated_at`.
+
+4. **`mind_mirror_results`**
+   - Indexes: `{ user_id: 1 }`, `{ created_at: 1 }`
+   - Documents: `_id`, `user_id`, `sleep`, `screen_time`, `study_hours`, `exercise`, `stress`, `mood`, `analysis`, `focus_score`, `burnout_risk`, `decision_readiness`, `attention_health`, `created_at`, `updated_at`.
+
+5. **`password_reset_tokens`**
+   - Indexes: `{ token: 1 }` (unique), `{ expires_at: 1 }` (TTL expiration)
+   - Documents: `_id`, `user_id`, `token`, `expires_at`, `used`, `created_at`.
+
+---
+
+## 🚢 Deployment Instructions
+
+### 1. Backend on Render
+1. Create a **New Web Service** connected to your repository.
+2. Root Directory: `backend`
+3. Environment: `Python 3`
+4. Build Command: `pip install -r requirements.txt`
+5. Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+6. Set Environment Variables:
+   - `MONGODB_URI`: Your MongoDB Atlas URI
+   - `DATABASE_NAME`: `tomorrow_me_ai`
+   - `JWT_SECRET`: A high-entropy random string
+   - `GEMINI_API_KEY`: Your Gemini API key
+   - `FRONTEND_URL`: `https://tomorrow-me-red.vercel.app`
+   - `CORS_ORIGINS`: `https://tomorrow-me-red.vercel.app`
+
+### 2. Frontend on Vercel
+1. Import repository on Vercel with Root Directory set to `frontend`.
+2. Framework Preset: **Next.js**.
+3. Build Command: `npm run build`.
+4. Environment Variables:
+   - `NEXT_PUBLIC_API_URL`: `https://tomorrow-me-backend.onrender.com/api` (or your Render backend URL)
+   - `BACKEND_URL`: `https://tomorrow-me-backend.onrender.com`

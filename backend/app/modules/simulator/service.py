@@ -1,25 +1,38 @@
-"""Simulator business logic — orchestrates Future Agent and Judge Agent."""
+"""Simulator business logic — orchestrates Future Agent and Judge Agent (MongoDB version)."""
 
 import logging
-
-from sqlalchemy.orm import Session
+from bson import ObjectId
 
 from app.ai.future_agent import future_agent
 from app.ai.judge_agent import judge_agent
 from app.core.exceptions import NotFoundError
-from app.modules.simulator.models import Simulation
-from app.modules.simulator.schemas import SimulationRequest
+from app.core.serializers import serialize_doc, now_utc
+from app.database import get_database
+from app.modules.simulator.schemas import SimulationRequest, SimulationResponse
 
 logger = logging.getLogger(__name__)
+
+
+def _sim_response(doc: dict) -> SimulationResponse:
+    """Build SimulationResponse from MongoDB document."""
+    return SimulationResponse(
+        id=str(doc["_id"]),
+        situation=doc["situation"],
+        goal=doc["goal"],
+        choices=doc["choices"],
+        timelines=doc.get("timelines", []),
+        recommendation=doc.get("recommendation"),
+        created_at=doc["created_at"].isoformat(),
+    )
 
 
 class SimulatorService:
     """Orchestrates future simulation analysis."""
 
-    def __init__(self, db: Session):
-        self.db = db
+    def __init__(self):
+        self.db = get_database()
 
-    def run_simulation(self, user_id: int, data: SimulationRequest) -> Simulation:
+    async def run_simulation(self, user_id: str, data: SimulationRequest) -> SimulationResponse:
         """Run a full future simulation for all choices."""
         logger.info(f"Running simulation for user {user_id}: {data.choices}")
 
@@ -39,43 +52,55 @@ class SimulatorService:
             agent_outputs=timelines,
         )
 
-        # Store in database
-        simulation = Simulation(
-            user_id=user_id,
-            situation=data.situation,
-            goal=data.goal,
-            choices=data.choices,
-            timelines=timelines,
-            recommendation=recommendation,
-        )
-        self.db.add(simulation)
-        self.db.commit()
-        self.db.refresh(simulation)
+        # Store in MongoDB
+        now = now_utc()
+        doc = {
+            "user_id": ObjectId(user_id),
+            "situation": data.situation,
+            "goal": data.goal,
+            "choices": data.choices,
+            "timelines": timelines,
+            "recommendation": recommendation,
+            "created_at": now,
+            "updated_at": now,
+        }
 
-        return simulation
+        result = await self.db.simulations.insert_one(doc)
+        doc["_id"] = result.inserted_id
 
-    def get_simulation(self, user_id: int, simulation_id: int) -> Simulation:
+        return _sim_response(doc)
+
+    async def get_simulation(self, user_id: str, simulation_id: str) -> SimulationResponse:
         """Get a specific simulation by ID."""
-        simulation = (
-            self.db.query(Simulation)
-            .filter(Simulation.id == simulation_id, Simulation.user_id == user_id)
-            .first()
-        )
-        if not simulation:
+        try:
+            doc = await self.db.simulations.find_one({
+                "_id": ObjectId(simulation_id),
+                "user_id": ObjectId(user_id),
+            })
+        except Exception:
             raise NotFoundError("Simulation not found")
-        return simulation
 
-    def list_simulations(self, user_id: int) -> list[Simulation]:
+        if not doc:
+            raise NotFoundError("Simulation not found")
+        return _sim_response(doc)
+
+    async def list_simulations(self, user_id: str) -> list[SimulationResponse]:
         """List all simulations for a user."""
-        return (
-            self.db.query(Simulation)
-            .filter(Simulation.user_id == user_id)
-            .order_by(Simulation.created_at.desc())
-            .all()
-        )
+        cursor = self.db.simulations.find(
+            {"user_id": ObjectId(user_id)}
+        ).sort("created_at", -1)
+        docs = await cursor.to_list(length=100)
+        return [_sim_response(doc) for doc in docs]
 
-    def delete_simulation(self, user_id: int, simulation_id: int) -> None:
+    async def delete_simulation(self, user_id: str, simulation_id: str) -> None:
         """Delete a simulation."""
-        simulation = self.get_simulation(user_id, simulation_id)
-        self.db.delete(simulation)
-        self.db.commit()
+        try:
+            result = await self.db.simulations.delete_one({
+                "_id": ObjectId(simulation_id),
+                "user_id": ObjectId(user_id),
+            })
+        except Exception:
+            raise NotFoundError("Simulation not found")
+
+        if result.deleted_count == 0:
+            raise NotFoundError("Simulation not found")

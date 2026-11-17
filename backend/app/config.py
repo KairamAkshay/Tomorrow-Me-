@@ -1,7 +1,9 @@
 """Application configuration via environment variables."""
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import field_validator
 from functools import lru_cache
+from typing import Any
 
 
 class Settings(BaseSettings):
@@ -9,28 +11,42 @@ class Settings(BaseSettings):
 
     # Application
     APP_NAME: str = "Tomorrow Me"
-    APP_VERSION: str = "1.0.0"
+    APP_VERSION: str = "2.0.0"
     DEBUG: bool = False
 
-    # Database
-    DATABASE_URL: str = "sqlite:///./tomorrow_me.db"
+    # MongoDB
+    MONGODB_URI: str = "mongodb://localhost:27017"
+    DATABASE_NAME: str = "tomorrow_me_ai"
 
     # Security
-    SECRET_KEY: str = "change-this-secret-key-in-production"
+    JWT_SECRET: str = "change-this-secret-key-in-production"
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440  # 24 hours
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    RESET_TOKEN_EXPIRE_MINUTES: int = 30
 
     # AI Configuration
+    GEMINI_API_KEY: str = ""
     AI_API_KEY: str = ""
-    AI_BASE_URL: str = "https://api.groq.com/openai/v1"
-    AI_MODEL: str = "llama-3.3-70b-versatile"
+    AI_BASE_URL: str = "https://generativelanguage.googleapis.com/v1beta/openai/"
+    AI_MODEL: str = "gemini-2.0-flash"
 
     # CORS
-    CORS_ORIGINS: str = "*"
+    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
+    FRONTEND_URL: str = "http://localhost:3000"
 
     # Rate Limiting
     RATE_LIMIT_REQUESTS: int = 60
     RATE_LIMIT_WINDOW: int = 60  # seconds
+
+    @field_validator("DEBUG", mode="before")
+    @classmethod
+    def parse_debug(cls, v: Any) -> bool:
+        """Handle case where external env var sets DEBUG to non-boolean like 'WARN'."""
+        if isinstance(v, bool):
+            return v
+        if isinstance(v, str):
+            return v.lower() in ("true", "1", "t", "yes", "y")
+        return False
 
     @property
     def cors_origins_list(self) -> list[str]:
@@ -41,14 +57,21 @@ class Settings(BaseSettings):
 
     @property
     def ai_available(self) -> bool:
-        """Check if AI API key is configured."""
-        return bool(self.AI_API_KEY and self.AI_API_KEY != "your-api-key-here")
+        """Check if any AI API key is configured."""
+        key = self.GEMINI_API_KEY or self.AI_API_KEY
+        return bool(key and key != "your-api-key-here")
 
-    model_config = {
-        "env_file": ".env",
-        "env_file_encoding": "utf-8",
-        "case_sensitive": True,
-    }
+    @property
+    def effective_ai_key(self) -> str:
+        """Return whichever AI key is set."""
+        return self.GEMINI_API_KEY or self.AI_API_KEY
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra="ignore",
+    )
 
 
 @lru_cache()

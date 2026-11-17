@@ -1,4 +1,4 @@
-"""Tomorrow Me — FastAPI Application Entry Point."""
+"""Tomorrow Me — FastAPI Application Entry Point with MongoDB Atlas."""
 
 import logging
 from contextlib import asynccontextmanager
@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.database import create_tables
+from app.database import connect_db, close_db, check_health
 from app.modules.auth.router import router as auth_router
 from app.modules.simulator.router import router as simulator_router
 from app.modules.reality.router import router as reality_router
@@ -28,11 +28,17 @@ settings = get_settings()
 async def lifespan(app: FastAPI):
     """Application startup and shutdown events."""
     logger.info(f"Starting {settings.APP_NAME} v{settings.APP_VERSION}")
-    create_tables()
-    logger.info("Database tables created")
+    try:
+        await connect_db()
+        logger.info("MongoDB initialized with collections and indexes")
+    except Exception as e:
+        logger.error(f"Failed to connect to MongoDB on startup: {e}")
+        # We don't crash hard if in dev or testing without local mongo, but log prominently
+
     logger.info(f"AI available: {settings.ai_available}")
     yield
-    logger.info("Shutting down")
+    logger.info("Shutting down Tomorrow Me Application")
+    await close_db()
 
 
 app = FastAPI(
@@ -65,11 +71,13 @@ app.include_router(reports_router, prefix="/api")
 
 
 @app.get("/api/health")
-def health_check():
-    """Health check endpoint."""
+async def health_check():
+    """Health check endpoint with database status."""
+    db_status = await check_health()
     return {
-        "status": "healthy",
+        "status": "healthy" if db_status.get("status") == "connected" else "degraded",
         "app": settings.APP_NAME,
         "version": settings.APP_VERSION,
+        "database": db_status,
         "ai_available": settings.ai_available,
     }

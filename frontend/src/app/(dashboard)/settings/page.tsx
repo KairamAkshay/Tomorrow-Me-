@@ -2,22 +2,53 @@
 
 "use client";
 
-import { Settings as SettingsIcon, User, LogOut } from "lucide-react";
+import { useState } from "react";
+import { Settings as SettingsIcon, User, LogOut, Check, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { GlassCard } from "@/components/shared/glass-card";
 import { PageTransition } from "@/components/shared/page-transition";
 import { useAuthStore } from "@/stores/auth-store";
+import { auth } from "@/lib/api";
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { user, logout } = useAuthStore();
+  const { user, logout, updateUser } = useAuthStore();
+
+  const [fullName, setFullName] = useState(user?.full_name || "");
+  const [email, setEmail] = useState(user?.email || "");
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState("");
 
   const handleLogout = () => {
     logout();
     router.push("/");
+  };
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess(false);
+    setLoading(true);
+
+    try {
+      const updated = await auth.updateProfile({
+        full_name: fullName.trim(),
+        email: email.trim().toLowerCase(),
+      });
+      updateUser(updated);
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to update profile");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -38,11 +69,11 @@ export default function SettingsPage() {
         {/* Profile Card */}
         <GlassCard hover={false} className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-2xl bg-[var(--accent-1)]/20 flex items-center justify-center text-2xl font-bold text-[var(--accent-1)]">
-            {user?.full_name?.[0] || user?.username?.[0] || "U"}
+            {user?.full_name?.[0] || user?.email?.[0]?.toUpperCase() || "U"}
           </div>
           <div className="flex-1">
             <h3 className="text-lg font-semibold">
-              {user?.full_name || user?.username}
+              {user?.full_name || "Tomorrow Me Explorer"}
             </h3>
             <p className="text-sm text-[var(--text-secondary)]">{user?.email}</p>
             <p className="text-xs text-[var(--text-tertiary)] mt-1">
@@ -61,30 +92,58 @@ export default function SettingsPage() {
           </Badge>
         </GlassCard>
 
-        {/* Account Info */}
+        {/* Account Info Form */}
         <GlassCard hover={false} className="flex flex-col gap-4">
           <h3 className="text-lg font-semibold flex items-center gap-2">
             <User className="w-4 h-4" />
-            Account Details
+            Edit Profile
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <p className="text-xs text-[var(--text-tertiary)] mb-1">Username</p>
-              <p className="text-sm font-medium">{user?.username}</p>
+
+          <form onSubmit={handleUpdateProfile} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="fullName">Full Name</Label>
+              <Input
+                id="fullName"
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="bg-[var(--surface-2)] border-[var(--border-default)] rounded-xl h-11"
+              />
             </div>
-            <div>
-              <p className="text-xs text-[var(--text-tertiary)] mb-1">Email</p>
-              <p className="text-sm font-medium">{user?.email}</p>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="email">Email Address</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="bg-[var(--surface-2)] border-[var(--border-default)] rounded-xl h-11"
+              />
             </div>
-            <div>
-              <p className="text-xs text-[var(--text-tertiary)] mb-1">Full Name</p>
-              <p className="text-sm font-medium">{user?.full_name || "Not set"}</p>
-            </div>
-            <div>
-              <p className="text-xs text-[var(--text-tertiary)] mb-1">Plan</p>
-              <p className="text-sm font-medium">Free — Unlimited Access</p>
-            </div>
-          </div>
+
+            {error && (
+              <div className="flex items-center gap-2 text-xs text-[var(--danger)]">
+                <AlertCircle className="w-3.5 h-3.5" />
+                {error}
+              </div>
+            )}
+
+            {success && (
+              <div className="flex items-center gap-2 text-xs text-[var(--success)]">
+                <Check className="w-3.5 h-3.5" />
+                Profile updated successfully!
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full sm:w-auto sm:self-start px-6 h-10 rounded-xl bg-[var(--accent-1)] hover:bg-[var(--accent-2)] text-white text-xs font-medium"
+            >
+              {loading ? "Saving..." : "Save Changes"}
+            </Button>
+          </form>
         </GlassCard>
 
         {/* Theme */}
@@ -94,7 +153,7 @@ export default function SettingsPage() {
             <div>
               <p className="text-sm font-medium">Dark Mode</p>
               <p className="text-xs text-[var(--text-tertiary)]">
-                Optimized for focus and reduced eye strain
+                Optimized for focus and futuristic aesthetic
               </p>
             </div>
             <Badge className="bg-[var(--accent-1)] text-white rounded-lg text-xs">

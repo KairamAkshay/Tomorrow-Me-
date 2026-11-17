@@ -2,10 +2,9 @@
 
 /* ===== Auth Types ===== */
 export interface User {
-  id: number;
-  username: string;
+  id: string;
   email: string;
-  full_name: string | null;
+  full_name: string;
   created_at: string;
 }
 
@@ -16,15 +15,34 @@ export interface TokenResponse {
 }
 
 export interface LoginRequest {
-  username: string;
+  email: string;
   password: string;
 }
 
 export interface RegisterRequest {
-  username: string;
+  full_name: string;
   email: string;
   password: string;
+  confirm_password: string;
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  new_password: string;
+  confirm_password: string;
+}
+
+export interface UpdateProfileRequest {
   full_name?: string;
+  email?: string;
+}
+
+export interface MessageResponse {
+  message: string;
 }
 
 /* ===== Simulator Types ===== */
@@ -68,7 +86,7 @@ export interface JudgeResult {
 }
 
 export interface Simulation {
-  id: number;
+  id: string;
   situation: string;
   goal: string;
   choices: string[];
@@ -112,7 +130,7 @@ export interface RealityAnalysis {
 }
 
 export interface RealityCheck {
-  id: number;
+  id: string;
   content: string;
   content_type: string;
   analysis: RealityAnalysis;
@@ -149,7 +167,7 @@ export interface MindAnalysis {
 }
 
 export interface MindAssessment {
-  id: number;
+  id: string;
   sleep: number;
   screen_time: number;
   study_hours: number;
@@ -166,7 +184,7 @@ export interface MindAssessment {
 
 /* ===== Reports Types ===== */
 export interface ReportItem {
-  id: number;
+  id: string;
   type: "simulation" | "reality_check" | "mind_assessment";
   title: string;
   summary: string;
@@ -185,5 +203,10 @@ export interface HealthResponse {
   status: string;
   app: string;
   version: string;
+  database?: {
+    status: string;
+    database?: string;
+    error?: string;
+  };
   ai_available: boolean;
 }

@@ -90,7 +90,7 @@ export default function DashboardPage() {
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
             Welcome back,{" "}
             <span className="gradient-text">
-              {user?.full_name?.split(" ")[0] || user?.username || "there"}
+              {user?.full_name?.split(" ")[0] || user?.email?.split("@")[0] || "there"}
             </span>
           </h1>
           <p className="text-[var(--text-secondary)] mt-2">

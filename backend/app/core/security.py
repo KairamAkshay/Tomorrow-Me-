@@ -1,5 +1,6 @@
 """Security utilities: JWT tokens and password hashing."""
 
+import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -36,15 +37,20 @@ def create_access_token(
         or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     )
     to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    return jwt.encode(to_encode, settings.JWT_SECRET, algorithm=settings.ALGORITHM)
 
 
 def decode_access_token(token: str) -> Optional[dict]:
     """Decode and validate a JWT access token."""
     try:
         payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+            token, settings.JWT_SECRET, algorithms=[settings.ALGORITHM]
         )
         return payload
     except JWTError:
         return None
+
+
+def generate_reset_token() -> str:
+    """Generate a secure random reset token."""
+    return secrets.token_urlsafe(32)

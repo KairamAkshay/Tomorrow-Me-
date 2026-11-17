@@ -1,12 +1,9 @@
-"""Mind Mirror API endpoints."""
+"""Mind Mirror API endpoints — MongoDB version."""
 
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user
 from app.core.rate_limiter import ai_rate_limiter
-from app.database import get_db
-from app.modules.auth.models import User
 from app.modules.mind.schemas import MindAssessmentRequest, MindAssessmentResponse
 from app.modules.mind.service import MindService
 
@@ -14,47 +11,44 @@ router = APIRouter(prefix="/mind", tags=["Mind Mirror"])
 
 
 @router.post("/assess", response_model=MindAssessmentResponse, status_code=201)
-def run_assessment(
+async def run_assessment(
     data: MindAssessmentRequest,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
 ):
     """Run a mind mirror assessment."""
-    ai_rate_limiter.check(str(current_user.id))
-    service = MindService(db)
-    assessment = service.assess(current_user.id, data)
-    return MindAssessmentResponse.model_validate(assessment)
+    user_id = str(current_user["_id"])
+    ai_rate_limiter.check(user_id)
+    service = MindService()
+    return await service.assess(user_id, data)
 
 
 @router.get("/", response_model=list[MindAssessmentResponse])
-def list_assessments(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+async def list_assessments(
+    current_user: dict = Depends(get_current_user),
 ):
     """List all mind assessments."""
-    service = MindService(db)
-    assessments = service.list_assessments(current_user.id)
-    return [MindAssessmentResponse.model_validate(a) for a in assessments]
+    user_id = str(current_user["_id"])
+    service = MindService()
+    return await service.list_assessments(user_id)
 
 
 @router.get("/{assessment_id}", response_model=MindAssessmentResponse)
-def get_assessment(
-    assessment_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+async def get_assessment(
+    assessment_id: str,
+    current_user: dict = Depends(get_current_user),
 ):
     """Get a specific assessment."""
-    service = MindService(db)
-    assessment = service.get_assessment(current_user.id, assessment_id)
-    return MindAssessmentResponse.model_validate(assessment)
+    user_id = str(current_user["_id"])
+    service = MindService()
+    return await service.get_assessment(user_id, assessment_id)
 
 
 @router.delete("/{assessment_id}", status_code=204)
-def delete_assessment(
-    assessment_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+async def delete_assessment(
+    assessment_id: str,
+    current_user: dict = Depends(get_current_user),
 ):
     """Delete an assessment."""
-    service = MindService(db)
-    service.delete_assessment(current_user.id, assessment_id)
+    user_id = str(current_user["_id"])
+    service = MindService()
+    await service.delete_assessment(user_id, assessment_id)

@@ -1,12 +1,9 @@
-"""Simulator API endpoints."""
+"""Simulator API endpoints — MongoDB version."""
 
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user
 from app.core.rate_limiter import ai_rate_limiter
-from app.database import get_db
-from app.modules.auth.models import User
 from app.modules.simulator.schemas import SimulationRequest, SimulationResponse
 from app.modules.simulator.service import SimulatorService
 
@@ -14,47 +11,44 @@ router = APIRouter(prefix="/simulator", tags=["Future Simulator"])
 
 
 @router.post("/run", response_model=SimulationResponse, status_code=201)
-def run_simulation(
+async def run_simulation(
     data: SimulationRequest,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
 ):
     """Run a new future simulation."""
-    ai_rate_limiter.check(str(current_user.id))
-    service = SimulatorService(db)
-    simulation = service.run_simulation(current_user.id, data)
-    return SimulationResponse.model_validate(simulation)
+    user_id = str(current_user["_id"])
+    ai_rate_limiter.check(user_id)
+    service = SimulatorService()
+    return await service.run_simulation(user_id, data)
 
 
 @router.get("/", response_model=list[SimulationResponse])
-def list_simulations(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+async def list_simulations(
+    current_user: dict = Depends(get_current_user),
 ):
     """List all simulations for the current user."""
-    service = SimulatorService(db)
-    simulations = service.list_simulations(current_user.id)
-    return [SimulationResponse.model_validate(s) for s in simulations]
+    user_id = str(current_user["_id"])
+    service = SimulatorService()
+    return await service.list_simulations(user_id)
 
 
 @router.get("/{simulation_id}", response_model=SimulationResponse)
-def get_simulation(
-    simulation_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+async def get_simulation(
+    simulation_id: str,
+    current_user: dict = Depends(get_current_user),
 ):
     """Get a specific simulation."""
-    service = SimulatorService(db)
-    simulation = service.get_simulation(current_user.id, simulation_id)
-    return SimulationResponse.model_validate(simulation)
+    user_id = str(current_user["_id"])
+    service = SimulatorService()
+    return await service.get_simulation(user_id, simulation_id)
 
 
 @router.delete("/{simulation_id}", status_code=204)
-def delete_simulation(
-    simulation_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+async def delete_simulation(
+    simulation_id: str,
+    current_user: dict = Depends(get_current_user),
 ):
     """Delete a simulation."""
-    service = SimulatorService(db)
-    service.delete_simulation(current_user.id, simulation_id)
+    user_id = str(current_user["_id"])
+    service = SimulatorService()
+    await service.delete_simulation(user_id, simulation_id)
