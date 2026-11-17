@@ -1,6 +1,7 @@
 """MongoDB database connection and initialization using Motor (async PyMongo)."""
 
 import logging
+import certifi
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from pymongo import IndexModel, ASCENDING
 from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
@@ -22,6 +23,7 @@ async def connect_db() -> None:
     logger.info(f"Connecting to MongoDB: {settings.DATABASE_NAME}")
     _client = AsyncIOMotorClient(
         settings.MONGODB_URI,
+        tlsCAFile=certifi.where(),
         serverSelectionTimeoutMS=5000,
         connectTimeoutMS=5000,
     )
