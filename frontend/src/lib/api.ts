@@ -27,10 +27,10 @@ function getApiBaseUrl(): string {
     if (!clean.endsWith("/api")) clean = `${clean}/api`;
     return clean;
   }
-  // In browser, if no env variable is set, default to relative /api (proxied by Next.js rewrites) or localhost
+  // In production browser, communicate directly with the live backend
   if (typeof window !== "undefined") {
     if (window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
-      return "/api";
+      return "https://tomorrow-me.onrender.com/api";
     }
   }
   return "http://localhost:8000/api";
