@@ -1,7 +1,6 @@
 """MongoDB database connection and initialization using Motor (async PyMongo)."""
 
 import logging
-import certifi
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from pymongo import IndexModel, ASCENDING
 from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
@@ -21,12 +20,24 @@ async def connect_db() -> None:
     global _client, _database
 
     logger.info(f"Connecting to MongoDB: {settings.DATABASE_NAME}")
-    _client = AsyncIOMotorClient(
-        settings.MONGODB_URI,
-        tlsCAFile=certifi.where(),
-        serverSelectionTimeoutMS=5000,
-        connectTimeoutMS=5000,
-    )
+
+    # Build connection kwargs — only add TLS CA for Atlas (non-local) connections
+    mongo_uri = settings.MONGODB_URI
+    connect_kwargs: dict = {
+        "serverSelectionTimeoutMS": 5000,
+        "connectTimeoutMS": 5000,
+    }
+
+    is_atlas = "mongodb.net" in mongo_uri or "mongodb+srv://" in mongo_uri
+    if is_atlas:
+        try:
+            import certifi
+            connect_kwargs["tlsCAFile"] = certifi.where()
+            logger.info("Using certifi TLS CA bundle for Atlas connection")
+        except ImportError:
+            logger.warning("certifi not installed — skipping TLS CA override")
+
+    _client = AsyncIOMotorClient(mongo_uri, **connect_kwargs)
     _database = _client[settings.DATABASE_NAME]
 
     # Verify connectivity

@@ -27,10 +27,12 @@ function getApiBaseUrl(): string {
     if (!clean.endsWith("/api")) clean = `${clean}/api`;
     return clean;
   }
-  // In production browser, communicate directly with the live backend
+  // In production on Vercel, use the rewrite proxy configured in vercel.json
+  // which routes /api/* → https://tomorrow-me.onrender.com/api/*
+  // This avoids CORS issues and keeps credentials flowing correctly.
   if (typeof window !== "undefined") {
     if (window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
-      return "https://tomorrow-me.onrender.com/api";
+      return "/api";
     }
   }
   return "http://localhost:8000/api";
