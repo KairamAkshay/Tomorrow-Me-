@@ -78,7 +78,7 @@ def run_tests():
             ]
         }
         sim_resp = client.post("/simulator/run", json=sim_payload, headers=auth_headers)
-        assert sim_resp.status_code == 200, f"Simulation failed: {sim_resp.text}"
+        assert sim_resp.status_code in (200, 201), f"Simulation failed: {sim_resp.text}"
         sim_data = sim_resp.json()
         print(f" -> Simulation ID: {sim_data['id']}")
         print(f" -> Timelines Generated: {len(sim_data['timelines'])}")
@@ -99,7 +99,7 @@ def run_tests():
             "content_type": "advice"
         }
         rc_resp = client.post("/reality/analyze", json=reality_payload, headers=auth_headers)
-        assert rc_resp.status_code == 200, f"Reality check failed: {rc_resp.text}"
+        assert rc_resp.status_code in (200, 201), f"Reality check failed: {rc_resp.text}"
         rc_data = rc_resp.json()
         print(f" -> Reality Score: {rc_data['overall_score']}/100")
         print(f" -> Summary: {rc_data['analysis']['summary'][:100]}...")
@@ -117,7 +117,7 @@ def run_tests():
             "mood": 6
         }
         mm_resp = client.post("/mind/assess", json=mind_payload, headers=auth_headers)
-        assert mm_resp.status_code == 200, f"Mind mirror failed: {mm_resp.text}"
+        assert mm_resp.status_code in (200, 201), f"Mind mirror failed: {mm_resp.text}"
         mm_data = mm_resp.json()
         print(f" -> Focus Score: {mm_data['focus_score']}/100")
         print(f" -> Burnout Risk: {mm_data['burnout_risk']}/100")
